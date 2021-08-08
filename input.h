@@ -42,6 +42,10 @@ public:
 	static bool isActive(int key);
 	static bool isActive(const std::vector<int>& keys);
 
+	// returns if a key such as caps lock, scroll lock is toggled on
+	// if key is not a togglable key, return value is undefined
+	static bool isToggled(int key);
+
 	// returns the current position of the mouse
 	static POINT position();
 

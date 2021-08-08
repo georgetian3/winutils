@@ -58,6 +58,7 @@ class Hook {
     bool (*interrupt)(Event) { nullptr };
     Input input;
     Event event;
+    bool states[256] = { 0 };
     MSG msg{ nullptr };
 
     void hook();
@@ -74,7 +75,7 @@ public:
     void add(bool (*action)(Event), int (*trigger)(Event) = nullptr);
     void setInterrupt(bool (*function)(Event));
     void remove(bool (*action)(Event), int (*trigger)(Event) = nullptr);
-
+    bool state(int key);
 
 };
 

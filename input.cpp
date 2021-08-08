@@ -18,7 +18,7 @@ int Input::sendInputs() {
 }
 
 bool Input::isActive(int key) {
-    return GetAsyncKeyState(key);
+    return GetAsyncKeyState(key) & 0x8000;
 }
 
 bool Input::isActive(const std::vector<int>& keys) {
@@ -28,6 +28,10 @@ bool Input::isActive(const std::vector<int>& keys) {
         }
     }
     return true;
+}
+
+bool Input::isToggled(int key) {
+    return GetKeyState(key) & 1;
 }
 
 POINT Input::position() {

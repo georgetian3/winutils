@@ -66,11 +66,11 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
             event.direction = false;
         }
         else if (wParam == WM_MBUTTONDOWN) {
-            event.key == VK_MBUTTON;
+            event.key = VK_MBUTTON;
             event.direction = true;
         }
         else if (wParam == WM_MBUTTONUP) {
-            event.key == VK_MBUTTON;
+            event.key = VK_MBUTTON;
             event.direction = false;
         }
         else if (wParam == WM_XBUTTONDOWN || wParam == WM_XBUTTONUP) {
@@ -85,6 +85,11 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
         event.injected = mouse->flags;
     }
 
+    if (event.key != WM_MOUSEMOVE && event.key != WM_MOUSEWHEEL) {
+        states[event.key] = event.direction;
+    }
+
+
     if (interrupt && interrupt(event)) {
         PostQuitMessage(0);
         return false;
@@ -92,6 +97,8 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
 
     bool block{ false };
 
+
+    
 
     for (int i{ 0 }; i < functions.size(); ++i) {
         block = functions[i].run(event) ? true : block;
@@ -103,6 +110,11 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
 
 Hook::Hook() {
     hookInstance = this;
+    
+    for (int i = 0; i < 256; i++) {
+        states[i] = Input::isActive(i);
+    }
+
 }
 void Hook::hook() {
     hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardHook, 0, 0);
@@ -138,4 +150,11 @@ void Hook::remove(bool (*action)(Event), int (*trigger)(Event)) {
             functions.erase(functions.begin() + i);
         }
     }
+}
+
+bool Hook::state(int key) {
+    if (key >= 0 && key <= 256) {
+        return states[key];
+    }
+    return false;
 }
