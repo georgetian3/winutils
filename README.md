@@ -15,12 +15,14 @@ Allows users to emulate mouse and keyboard input.
 
 
 
-Contains the below functions:
+
 
 The following constants relate to the direction of key presses:
  - `DOWN`: key is pressed down
  - `UP`: key is released up
  - `BOTH`: the key is pressed then immediately released
+
+Contains the following functions:
 
  - `void move(int x, int y, bool relative = false, bool send = true)`: emulates mouse movement. If `relative` is false, moves mouse pointer to the pixel at (`x`, `y`), otherwise moves mouse pointer `x` pixels right and `y` pixels down from the current pointer position.
  - `void scroll(int lines, bool send = true)`: emulates mouse wheel scrolling. Negative lines indicates scrolling up and vice versa.
