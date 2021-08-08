@@ -5,19 +5,20 @@
 #include "input.h"
 
 
-bool Function::run(int event, PKBDLLHOOKSTRUCT keyboard, PMSLLHOOKSTRUCT mouse) {
-    if (trigger != nullptr && !trigger(event, keyboard, mouse)) {
+bool Function::run(Event event) {
+    if (trigger) {
+        int trigger_return = trigger(event);
+        if (trigger_return) {
+            if (!thread.valid() || thread.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                thread = std::async(std::launch::async, action, event);
+            }
+            return trigger_return == 2;
+        }
         return false;
     }
-    if (slow) {
-        if (!thread.valid() || thread.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            thread = std::async(std::launch::async, action, event, keyboard, mouse);
-        }
-    }
     else {
-        action(event, keyboard, mouse);
+        return action(event);
     }
-    return block;
 }
 
 Hook* hookInstance;
@@ -29,20 +30,71 @@ LRESULT CALLBACK mouseHook(int nCode, WPARAM wParam, LPARAM lParam) {
     return hookInstance->hookProc(0, wParam, lParam) ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
-bool Hook::hookProc(bool type, WPARAM wParam, LPARAM lParam) {
+bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
 
-    if (Input::isActive({ VK_CONTROL, VK_SHIFT, VK_MENU, 'Q' })) {
+    // constructing Event
+    if (device) { // keyboard input
+        keyboard = (PKBDLLHOOKSTRUCT)lParam;
+        event.key = keyboard->vkCode;
+        event.direction = !(keyboard->flags & LLKHF_UP);
+        event.injected = keyboard->flags & LLKHF_INJECTED;
+    }
+    else { // mouse input
+        mouse = (PMSLLHOOKSTRUCT)lParam;
+        if (wParam == WM_MOUSEMOVE) {
+            event.key = WM_MOUSEMOVE;
+            event.point = mouse->pt;
+        }
+        else if (wParam == WM_MOUSEWHEEL) {
+            event.key = WM_MOUSEWHEEL;
+            event.direction = mouse->mouseData == 0xff880000;
+        }
+        else if (wParam == WM_LBUTTONDOWN) {
+            event.key = VK_LBUTTON;
+            event.direction = true;
+        }
+        else if (wParam == WM_LBUTTONUP) {
+            event.key = VK_LBUTTON;
+            event.direction = false;
+        }
+        else if (wParam == WM_RBUTTONDOWN) {
+            event.key = VK_RBUTTON;
+            event.direction = true;
+        }
+        else if (wParam == WM_RBUTTONUP) {
+            event.key = VK_RBUTTON;
+            event.direction = false;
+        }
+        else if (wParam == WM_MBUTTONDOWN) {
+            event.key == VK_MBUTTON;
+            event.direction = true;
+        }
+        else if (wParam == WM_MBUTTONUP) {
+            event.key == VK_MBUTTON;
+            event.direction = false;
+        }
+        else if (wParam == WM_XBUTTONDOWN || wParam == WM_XBUTTONUP) {
+            if (mouse->mouseData >> 16 == 1) {
+                event.key = VK_XBUTTON1;
+            }
+            else {
+                event.key = VK_XBUTTON2;
+            }
+            event.direction = wParam == WM_XBUTTONDOWN ? true : false;
+        }
+        event.injected = mouse->flags;
+    }
+
+    if (interrupt && interrupt(event)) {
         PostQuitMessage(0);
         return false;
     }
 
-    keyboard = type ? (PKBDLLHOOKSTRUCT)lParam : nullptr;
-    mouse = type ? nullptr : (PMSLLHOOKSTRUCT)lParam;
-
     bool block{ false };
 
+
     for (int i{ 0 }; i < functions.size(); ++i) {
-        block = functions[i].run(wParam, keyboard, mouse) ? true : block;
+        block = functions[i].run(event) ? true : block;
     }
 
     return block;
@@ -57,6 +109,7 @@ void Hook::hook() {
     hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, mouseHook, 0, 0);
 }
 void Hook::unhook() {
+    UnhookWindowsHookEx(hKeyboardHook);
     UnhookWindowsHookEx(hMouseHook);
 }
 Hook::~Hook() {
@@ -71,10 +124,18 @@ void Hook::run() {
 }
 
 
-void Hook::add(
-    void (*action)(WPARAM, PKBDLLHOOKSTRUCT, PMSLLHOOKSTRUCT),
-    bool (*trigger)(WPARAM, PKBDLLHOOKSTRUCT, PMSLLHOOKSTRUCT),
-    bool block,
-    bool thread) {
-    functions.push_back(Function(action, trigger, block, thread));
+void Hook::add(bool (*action)(Event), int (*trigger)(Event)) {
+    functions.push_back(Function(action, trigger));
+}
+
+void Hook::setInterrupt(bool (*function)(Event)) {
+    interrupt = function;
+}
+
+void Hook::remove(bool (*action)(Event), int (*trigger)(Event)) {
+    for (int i = functions.size() - 1; i >= 0; i--) {
+        if (functions[i].action == action && functions[i].trigger == trigger) {
+            functions.erase(functions.begin() + i);
+        }
+    }
 }
