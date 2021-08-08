@@ -14,6 +14,25 @@ Provides the functionality below for Windows operating system:
 
 Allows users to hook keyboard and mouse input. One use case is the creation of custom hot keys, similar to the functionality of [AutoHotKey](https://github.com/AutoHotkey/AutoHotkey), whilst using C++ syntax.
 
+Users can add functions to the `Hook` instance for it to be executed when certain events occur. Mouse and keyboard events are translated by `Hook` into `Event` structures, which contain the following variables:
+
+ - `key`: the [virtual key code](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) of the button or key that was pressed or released. The two events that are not strictly virtual key codes are `WM_MOUSEMOVE` which indicates the mouse pointer's position has changed, and `WM_MOUSEWHEEL` which indicates the mouse wheel has been scrolled.
+ - `direction`: `true` if the key was pressed, `false` if the key was released. When `key` has the value `WM_MOUSEWHEEL`, `false` indicates the scroll wheel was moved up away from the user, and `true` otherwise. Not applicable if `key` has value `WM_MOUSEMOVE`.
+ - `injected`: `true` if the input event was injected by this or another application, `false` otherwise.
+ - `point`: contains the x and y coordinates of the mouse pointer. Only applicable if `key` has the value `WM_MOUSEMOVE`
+
+ When adding to the hook, the user must provide an `action` function that returns a `bool`, and optionally a `trigger` function which returns an `int`. Both functions must take an `Event` structure as their only paramter.
+
+ If the function can be executed quickly (such as injecting a few keystrokes), only providing `action` is sufficient. It must return whether or not the event should be blocked from further propagating through Window's message queue.
+
+ Otherwise, if `action` is slow, a `trigger` function must be provided, the return value of which decides whether or not to execute the main `action function, as well as whether or not to block the event:
+  - `0`: `action` is not executed, event is not blocked
+  - `1`: `action` is executed in a separate thread, event is not blocked
+  - `1`: `action` is executed in a separate thread, event is blocked
+
+Currently, each slow `action` must be completed before it can be executed again.
+
+
 Below is an example of using `Hook` and `Input` together to remap the side mouse buttons to `Ctrl-C` and `Ctrl-V`
 
     #include "hook.h"
