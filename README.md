@@ -9,6 +9,29 @@ Provides the functionality below for Windows operating system:
 - Running command prompt commands and retrieving output (`exec` function)
 - Getting current time, and stopwatch (`Timer` class)
 
+## `Input`
+
+Allows users to emulate mouse and keyboard input.
+
+
+
+Contains the below functions:
+
+The following constants relate to the direction of key presses:
+ - `DOWN`: key is pressed down
+ - `UP`: key is released up
+ - `BOTH`: the key is pressed then immediately released
+
+ - `void move(int x, int y, bool relative = false, bool send = true)`: emulates mouse movement. If `relative` is false, moves mouse pointer to the pixel at (`x`, `y`), otherwise moves mouse pointer `x` pixels right and `y` pixels down from the current pointer position.
+ - `void scroll(int lines, bool send = true)`: emulates mouse wheel scrolling. Negative lines indicates scrolling up and vice versa.
+ - `void press(int key, int direction = BOTH, bool send = true)`: emulates a mouse button click / keyboard key press. `key` is the [virtual code](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) of the key, `direction` takes a constant explained above.
+ - `void combo(const std::vector<int>& keys, bool send = true)`: emulates a key combo. Given a vector of virtual key codes, `press(key, DOWN, false)` is called for each key in order, then `press(key, UP, false)` is called for each key in reverse order, then all events are sent.
+ - `void type(const std::string& str, bool send = true)`: enters a string instead of a series of keyboard inputs.
+ - `void type(const std::wstring& str, bool send = true)`: same as above, but for strings containing wide characters.
+
+ All the functions above have the parameter `send`. This is because all functions above first append the input event to an array, before using Window's `SendInput` API to inject the events. If it is intended for multiple events to be emulated successively, then it is recommended to give all but the last function call's parameter `send` the value of `false`. Alternatively, call `send_inputs()` when you wish for all prepared events to be injected. `send_inputs()` returns the number of events that were actually injected.
+
+ The constructor takes an `int` which defines the length of the array that holds input events. Error handling for when one prepares more events than the array can hold is currently not implemented.
 
 ## `Hook`
 
