@@ -28,7 +28,7 @@ Users can add functions to the `Hook` instance for it to be executed when certai
  Otherwise, if `action` is slow, a `trigger` function must be provided, the return value of which decides whether or not to execute the main `action function, as well as whether or not to block the event:
   - `0`: `action` is not executed, event is not blocked
   - `1`: `action` is executed in a separate thread, event is not blocked
-  - `1`: `action` is executed in a separate thread, event is blocked
+  - `2`: `action` is executed in a separate thread, event is blocked
 
 Currently, each slow `action` must be completed before it can be executed again.
 
