@@ -33,15 +33,15 @@ class Function {
 
 private:
 
-    bool (*action)(Event) { nullptr };
-    int (*trigger)(Event) { nullptr };
+    bool (*action)(Event&) { nullptr };
+    int (*trigger)(Event&) { nullptr };
 
     std::future<bool> thread;
 
-    Function(bool (*action)(Event), int (*trigger)(Event) = nullptr) :
+    Function(bool (*action)(Event&), int (*trigger)(Event&) = nullptr) :
         action(action), trigger(trigger) {}
 
-    bool run(Event event);
+    bool run(Event&);
 
     friend class Hook;
 
@@ -55,7 +55,7 @@ class Hook {
     PKBDLLHOOKSTRUCT keyboard{ nullptr };
     PMSLLHOOKSTRUCT mouse{ nullptr };
     std::vector<Function> functions;
-    bool (*interrupt)(Event) { nullptr };
+    bool (*interrupt)(Event&) { nullptr };
     Input input;
     Event event;
     bool states[256] = { 0 };
@@ -72,10 +72,11 @@ public:
 
     bool hookProc(bool type, WPARAM wParam, LPARAM lParam);
 
-    void add(bool (*action)(Event), int (*trigger)(Event) = nullptr);
-    void setInterrupt(bool (*function)(Event));
-    void remove(bool (*action)(Event), int (*trigger)(Event) = nullptr);
+    void add(bool (*action)(Event&), int (*trigger)(Event&) = nullptr);
+    void set_interrupt(bool (*function)(Event&));
+    void remove(bool (*action)(Event&), int (*trigger)(Event&) = nullptr);
     bool state(int key);
+    bool state(const std::vector<int>& keys);
 
 };
 

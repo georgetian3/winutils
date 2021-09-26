@@ -4,7 +4,7 @@
 
 
 Input::Input(int max_size) {
-    max_size_ = max_size
+    max_size_ = max_size;
     inputs = new INPUT[max_size_];
 }
 
@@ -18,25 +18,25 @@ int Input::send_inputs() {
     return inserted;
 }
 
-bool Input::isActive(int key) {
+bool Input::is_pressed(int key) {
     return GetAsyncKeyState(key) & 0x8000;
 }
 
-bool Input::isActive(const std::vector<int>& keys) {
+bool Input::is_pressed(const std::vector<int>& keys) {
     for (int key : keys) {
-        if (!isActive(key)) {
+        if (!is_pressed(key)) {
             return false;
         }
     }
     return true;
 }
 
-bool Input::isToggled(int key) {
+bool Input::is_toggled(int key) {
     return GetKeyState(key) & 1;
 }
 
 POINT Input::position() {
-    
+    POINT point;
     GetCursorPos(&point);
     return point;
 }
@@ -53,7 +53,7 @@ void Input::move(int x, int y, bool relative, bool send) {
     }
     ++cInputs;
     if (send) {
-        sendInputs();
+        send_inputs();
     }
 }
 
@@ -63,7 +63,7 @@ void Input::scroll(int lines, bool send) {
     inputs[cInputs].mi.dwFlags = MOUSEEVENTF_WHEEL;
     ++cInputs;
     if (send) {
-        sendInputs();
+        send_inputs();
     }
 }
 
@@ -95,7 +95,7 @@ void Input::press(int key, int direction, bool send) {
     }
     ++cInputs;
     if (send) {
-        sendInputs();
+        send_inputs();
     }
 }
 
@@ -107,7 +107,7 @@ void Input::combo(const std::vector<int>& keys, bool send) {
         press(key, UP, false);
     }
     if (send) {
-        sendInputs();
+        send_inputs();
     }
 }
 
@@ -124,7 +124,7 @@ void Input::type(const std::string& str, bool send) {
         ++cInputs;
     }
     if (send) {
-        sendInputs();
+        send_inputs();
     }
 }
 
@@ -141,6 +141,6 @@ void Input::type(const std::wstring& str, bool send) {
         ++cInputs;
     }
     if (send) {
-        sendInputs();
+        send_inputs();
     }
 }

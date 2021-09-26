@@ -18,10 +18,9 @@ private:
 	// array storing events to be inputted
 	INPUT* inputs;
 	// counter for the number of events in `inputs`
-	int max_size_{65536}
+	int max_size_{ 65536 };
 	int cInputs{ 0 };
-	// used in `position()`
-	POINT point;
+	
 
 public:
 
@@ -33,7 +32,7 @@ public:
 	static const int BOTH{ 2 };
 
 	// maxSize defines the size of `inputs`, which limits how many inputs can be inserted at once
-	Input(int max_size = max_size_);
+	Input(int max_size = 65536);
 	~Input();
 
 	// returns whether a key, given its virtual key code, is currently pressed down

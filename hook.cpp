@@ -1,16 +1,18 @@
-#include <thread>
-#include <vector>
-#include <windows.h>
 #include "hook.h"
 #include "input.h"
 
+#include <thread>
+#include <vector>
+#include <windows.h>
 
-bool Function::run(Event event) {
+
+
+bool Function::run(Event& event) {
     if (trigger) {
         int trigger_return = trigger(event);
         if (trigger_return) {
             if (!thread.valid() || thread.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-                thread = std::async(std::launch::async, action, event);
+                thread = std::async(std::launch::async, action, std::ref(event));
             }
             return trigger_return == 2;
         }
@@ -112,7 +114,7 @@ Hook::Hook() {
     hookInstance = this;
     
     for (int i = 0; i < 256; i++) {
-        states[i] = Input::isActive(i);
+        states[i] = Input::is_pressed(i);
     }
 
 }
@@ -136,16 +138,16 @@ void Hook::run() {
 }
 
 
-void Hook::add(bool (*action)(Event), int (*trigger)(Event)) {
+void Hook::add(bool (*action)(Event&), int (*trigger)(Event&)) {
     functions.push_back(Function(action, trigger));
 }
 
-void Hook::setInterrupt(bool (*function)(Event)) {
+void Hook::set_interrupt(bool (*function)(Event&)) {
     interrupt = function;
 }
 
-void Hook::remove(bool (*action)(Event), int (*trigger)(Event)) {
-    for (int i = functions.size() - 1; i >= 0; i--) {
+void Hook::remove(bool (*action)(Event&), int (*trigger)(Event&)) {
+    for (int i = static_cast<int>(functions.size()) - 1; i >= 0; i--) {
         if (functions[i].action == action && functions[i].trigger == trigger) {
             functions.erase(functions.begin() + i);
         }
@@ -157,4 +159,13 @@ bool Hook::state(int key) {
         return states[key];
     }
     return false;
+}
+
+bool Hook::state(const std::vector<int>& keys) {
+    for (int key : keys) {
+        if (!state(key)) {
+            return false;
+        }
+    }
+    return true;
 }
