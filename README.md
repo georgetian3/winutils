@@ -1,6 +1,6 @@
 # winutils
 
-Provides the functionality below for Windows operating system:
+Provides the functionality below for Windows:
 
 - Mouse and keyboard input simulation (`Input` class)
 - Mouse and keyboard input hooking (`Hook` class)
