@@ -4,6 +4,8 @@
 #include <string>
 #include <thread>
 
+const std::chrono::duration<double> Timer::buffer{0.05};
+
 tm get_tm() {
     time_t rawtime;
     time (&rawtime);
@@ -60,6 +62,10 @@ void Timer::stop() {
         m_end = std::chrono::high_resolution_clock::now();
     }
     running = false;
+}
+
+void Timer::reset() {
+
 }
 
 double Timer::elapsed() {

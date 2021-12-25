@@ -6,7 +6,7 @@
 
 class Timer {
 
-    static constexpr std::chrono::duration<double> buffer{0.05};
+    static const std::chrono::duration<double> buffer;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
     std::chrono::time_point<std::chrono::high_resolution_clock> m_end;
@@ -27,6 +27,7 @@ public:
 
     void start();
     void stop();
+    void reset();
     bool isRunning();
     double elapsed();
 

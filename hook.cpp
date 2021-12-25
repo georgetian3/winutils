@@ -89,6 +89,9 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
 
     if (event.key != WM_MOUSEMOVE && event.key != WM_MOUSEWHEEL) {
         states[event.key] = event.direction;
+        states[VK_SHIFT] = states[VK_LSHIFT] || states[VK_RSHIFT];
+        states[VK_CONTROL] = states[VK_LCONTROL] || states[VK_RCONTROL];
+        states[VK_MENU] = states[VK_LMENU] || states[VK_RMENU];
     }
 
 
@@ -97,16 +100,13 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
         return false;
     }
 
-    bool block{ false };
-
-
-    
-
     for (int i{ 0 }; i < functions.size(); ++i) {
-        block = functions[i].run(event) ? true : block;
+        if (functions[i].run(event)) {
+            return true;
+        }
     }
 
-    return block;
+    return false;
 
 }
 
