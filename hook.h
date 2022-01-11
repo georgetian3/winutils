@@ -29,7 +29,7 @@ struct Event {
 // 1 indicates the action function should be run, but the event will be passed on
 // 2 indicates the action function should be run, and the event will be blocked
 
-class Function {
+/* class Function {
 
 private:
 
@@ -46,7 +46,7 @@ private:
     friend class Hook;
 
 };
-
+ */
 
 class Hook {
 
@@ -54,12 +54,15 @@ class Hook {
     HHOOK hMouseHook{ nullptr };
     PKBDLLHOOKSTRUCT keyboard{ nullptr };
     PMSLLHOOKSTRUCT mouse{ nullptr };
-    std::vector<Function> functions;
-    bool (*interrupt)(Event&) { nullptr };
+/*     std::vector<Function> functions;
+    bool (*interrupt)(Event&) { nullptr }; */
+
     Input input;
     Event event;
     bool states[256] = { 0 };
     MSG msg{ nullptr };
+
+    bool (*function)(const Event&){ nullptr };
 
     void hook();
     void unhook();
@@ -68,13 +71,15 @@ public:
 
     Hook();
     ~Hook();
-    void run();
+    void run(bool (*function)(const Event&));
 
     bool hookProc(bool type, WPARAM wParam, LPARAM lParam);
 
-    void add(bool (*action)(Event&), int (*trigger)(Event&) = nullptr);
+/*     void add(bool (*action)(Event&), int (*trigger)(Event&) = nullptr);
     void set_interrupt(bool (*function)(Event&));
-    void remove(bool (*action)(Event&), int (*trigger)(Event&) = nullptr);
+    void remove(bool (*action)(Event&), int (*trigger)(Event&) = nullptr); */
+
+
     bool state(int key);
     bool state(const std::vector<int>& keys);
 

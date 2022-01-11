@@ -2,12 +2,12 @@
 #define INPUT_H
 
 #include <string>
-#include <windows.h>
 #include <vector>
+#include <windows.h>
 
 
 // inputs are not inserted but are stored in `inputs` until either a function is called with the parameter
-// `send` as true, or `sendInputs` is called
+// `send` as true, or `send_inputs` is called
 
 class Input {
 
@@ -19,17 +19,19 @@ private:
 	// stores events to be inputted
 	std::vector<INPUT> inputs;
 
+	bool max_limits();
+
 public:
 
 	int send_inputs();
 
-	// constants defining whether a button/key is pressed DOWN, released UP, or BOTH
+	// constants defining whether a button/key is pressed DOWN, released UP, or DOWNUP
 	static const int UP{ 0 };
 	static const int DOWN{ 1 };
-	static const int BOTH{ 2 };
+	static const int DOWNUP{ 2 };
 
-	Input();
-	~Input();
+/* 	Input();
+	~Input(); */
 
 /* 	// returns whether a key, given its virtual key code, is currently pressed down
 	static bool is_pressed(int key);
@@ -43,22 +45,22 @@ public:
 	static POINT position(); */
 
 	// moves mouse to specified position
-	void move(int x, int y, bool relative = false, bool send = true);
+	bool move(int x, int y, bool relative = false, bool send = true);
 
 	// scrolls the mouse wheel up (lines < 0) or down (lines > 0)
-	void scroll(int lines, bool send = true);
+	bool scroll(int lines, bool send = true);
 
 	// presses a key given its virtual code in the specified direction
-	void press(int key, int direction = BOTH, bool send = true);
+	bool press(int key, int direction = DOWNUP, bool send = true);
 
 	// given a vector of keys, presses each down in order, then releases each in reverse order
-	void combo(const std::vector<int>& keys, bool send = true);
+	bool combo(const std::vector<int>& keys, bool send = true);
 
 	// types a string of normal characters
-	void type(const std::string& str, bool send = true);
+	bool type(const std::string& str, bool send = true);
 
 	// types a string of wide characters
-	void type(const std::wstring& str, bool send = true);
+	bool type(const std::wstring& str, bool send = true);
 
 };
 

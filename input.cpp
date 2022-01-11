@@ -2,14 +2,21 @@
 #include <cmath>
 #include <string>
 
+bool Input::max_limits() {
+    if (inputs.size() >= 1000) {
+        return true;
+    }
+    return false;
+}
 
-Input::Input() {
+
+/* Input::Input() {
 
 }
 
 Input::~Input() {
 
-}
+} */
 
 int Input::send_inputs() {
     int inserted = SendInput(inputs.size(), inputs.data(), sizeof(INPUT));
@@ -40,7 +47,10 @@ POINT Input::position() {
     return point;
 } */
 
-void Input::move(int x, int y, bool relative, bool send) {
+bool Input::move(int x, int y, bool relative, bool send) {
+    if (max_limits()) {
+        return false;
+    }
     inputs.emplace_back(INPUT());
     inputs.back().type = INPUT_MOUSE;
     inputs.back().mi.dx = x;
@@ -54,9 +64,10 @@ void Input::move(int x, int y, bool relative, bool send) {
     if (send) {
         send_inputs();
     }
+    return true;
 }
 
-void Input::scroll(int lines, bool send) {
+bool Input::scroll(int lines, bool send) {
     inputs.emplace_back(INPUT());
     inputs.back().type = INPUT_MOUSE;
     inputs.back().mi.mouseData = lines;
@@ -64,6 +75,7 @@ void Input::scroll(int lines, bool send) {
     if (send) {
         send_inputs();
     }
+    return true;
 }
 
 const int mouseFlags[2][5]{
@@ -71,11 +83,14 @@ const int mouseFlags[2][5]{
     {0, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_RIGHTDOWN, 0, MOUSEEVENTF_MIDDLEDOWN}
 };
 
-void Input::press(int key, int direction, bool send) {
-    if (direction == BOTH) {
+bool Input::press(int key, int direction, bool send) {
+    if (max_limits()) {
+        return false;
+    }
+    if (direction == DOWNUP) {
         press(key, DOWN, false);
         press(key, UP, send);
-        return;
+        return true;
     }
     inputs.emplace_back(INPUT());
     if (key >= 1 && key <= 6 && key != 3) {
@@ -96,9 +111,13 @@ void Input::press(int key, int direction, bool send) {
     if (send) {
         send_inputs();
     }
+    return true;
 }
 
-void Input::combo(const std::vector<int>& keys, bool send) {
+bool Input::combo(const std::vector<int>& keys, bool send) {
+    if (max_limits()) {
+        return false;
+    }
     for (int key : keys) {
         press(key, DOWN, false);
     }
@@ -108,9 +127,13 @@ void Input::combo(const std::vector<int>& keys, bool send) {
     if (send) {
         send_inputs();
     }
+    return true;
 }
 
-void Input::type(const std::string& str, bool send) {
+bool Input::type(const std::string& str, bool send) {
+    if (max_limits()) {
+        return false;
+    }
     for (const char& c : str) {
         inputs.emplace_back(INPUT());
         inputs.back().type = INPUT_KEYBOARD;
@@ -124,9 +147,13 @@ void Input::type(const std::string& str, bool send) {
     if (send) {
         send_inputs();
     }
+    return true;
 }
 
-void Input::type(const std::wstring& str, bool send) {
+bool Input::type(const std::wstring& str, bool send) {
+    if (max_limits()) {
+        return false;
+    }
     for (const wchar_t& c : str) {
         inputs.back().type = INPUT_KEYBOARD;
         inputs.back().ki.wScan = c;
@@ -140,4 +167,5 @@ void Input::type(const std::wstring& str, bool send) {
     if (send) {
         send_inputs();
     }
+    return true;
 }

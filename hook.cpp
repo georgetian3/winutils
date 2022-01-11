@@ -7,7 +7,7 @@
 
 
 
-bool Function::run(Event& event) {
+/* bool Function::run(Event& event) {
     if (trigger) {
         int trigger_return = trigger(event);
         if (trigger_return) {
@@ -21,16 +21,11 @@ bool Function::run(Event& event) {
     else {
         return action(event);
     }
-}
+} */
 
 Hook* hookInstance;
 
-LRESULT CALLBACK keyboardHook(int nCode, WPARAM wParam, LPARAM lParam) {
-    return hookInstance->hookProc(1, wParam, lParam) ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-LRESULT CALLBACK mouseHook(int nCode, WPARAM wParam, LPARAM lParam) {
-    return hookInstance->hookProc(0, wParam, lParam) ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam);
-}
+
 
 bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
 
@@ -43,7 +38,49 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
     }
     else { // mouse input
         mouse = (PMSLLHOOKSTRUCT)lParam;
-        if (wParam == WM_MOUSEMOVE) {
+        event.injected = mouse->flags;
+        switch (wParam) {
+            case WM_MOUSEMOVE:
+                event.key = WM_MOUSEMOVE;
+                event.point = mouse->pt;
+                break;
+            case WM_MOUSEWHEEL:
+                event.key = WM_MOUSEWHEEL;
+                event.direction = mouse->mouseData == 0xff880000;
+                break;
+            case WM_LBUTTONDOWN:
+                event.key = VK_LBUTTON;
+                event.direction = false;
+                break;
+            case WM_LBUTTONUP:
+                event.key = VK_LBUTTON;
+                event.direction = false;
+                break;
+            case WM_RBUTTONDOWN:
+                event.key = VK_RBUTTON;
+                event.direction = true;
+                break;
+            case WM_RBUTTONUP:
+                event.key = VK_RBUTTON;
+                event.direction = false;
+                break;
+            case WM_MBUTTONDOWN:
+                event.key = VK_MBUTTON;
+                event.direction = true;
+                break;
+            case WM_MBUTTONUP:
+                event.key = VK_MBUTTON;
+                event.direction = false;
+                break;
+            case WM_XBUTTONDOWN:
+            case WM_XBUTTONUP:
+                event.key = mouse->mouseData >> 16 == 1 ? VK_XBUTTON1 : VK_XBUTTON2;
+                event.direction = wParam == WM_XBUTTONDOWN;
+                break;
+            default:
+                exit(1);
+        }
+/*         if (wParam == WM_MOUSEMOVE) {
             event.key = WM_MOUSEMOVE;
             event.point = mouse->pt;
         }
@@ -83,19 +120,21 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
                 event.key = VK_XBUTTON2;
             }
             event.direction = wParam == WM_XBUTTONDOWN ? true : false;
-        }
-        event.injected = mouse->flags;
+        } */
     }
 
-    if (event.key != WM_MOUSEMOVE && event.key != WM_MOUSEWHEEL) {
+
+    if (!function(event) && event.key != WM_MOUSEMOVE && event.key != WM_MOUSEWHEEL) {
         states[event.key] = event.direction;
         states[VK_SHIFT] = states[VK_LSHIFT] || states[VK_RSHIFT];
         states[VK_CONTROL] = states[VK_LCONTROL] || states[VK_RCONTROL];
         states[VK_MENU] = states[VK_LMENU] || states[VK_RMENU];
+        return false;
     }
+    return true;
 
 
-    if (interrupt && interrupt(event)) {
+/*     if (interrupt && interrupt(event)) {
         PostQuitMessage(0);
         return false;
     }
@@ -104,23 +143,23 @@ bool Hook::hookProc(bool device, WPARAM wParam, LPARAM lParam) {
         if (functions[i].run(event)) {
             return true;
         }
-    }
-
-    return false;
+    } */
 
 }
 
 Hook::Hook() {
     hookInstance = this;
     
+    /*
     for (int i = 0; i < 256; i++) {
         states[i] = Input::is_pressed(i);
     }
+    */
 
 }
 void Hook::hook() {
     hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardHook, 0, 0);
-    hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, mouseHook, 0, 0);
+    hMouseHook    = SetWindowsHookEx(WH_MOUSE_LL, mouseHook, 0, 0);
 }
 void Hook::unhook() {
     UnhookWindowsHookEx(hKeyboardHook);
@@ -130,14 +169,16 @@ Hook::~Hook() {
     unhook();
 }
 
-void Hook::run() {
+void Hook::run(bool (*function)(const Event&)) {
+    function = function;
     hook();
+    GetKeyboardState((PBYTE)states);
     while (GetMessage(&msg, NULL, 0, 0)) {
         DispatchMessage(&msg);
     }
 }
 
-
+/*
 void Hook::add(bool (*action)(Event&), int (*trigger)(Event&)) {
     functions.push_back(Function(action, trigger));
 }
@@ -153,6 +194,7 @@ void Hook::remove(bool (*action)(Event&), int (*trigger)(Event&)) {
         }
     }
 }
+*/
 
 bool Hook::state(int key) {
     if (key >= 0 && key <= 256) {
